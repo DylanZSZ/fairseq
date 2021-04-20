@@ -84,13 +84,13 @@ class MaskedLMTask(LegacyFairseqTask):
         )
         parser.add_argument(
             "--mask-whole-words",
-            default=False,
+            default=True,
             action="store_true",
             help="mask whole words; you may also want to set --bpe",
         )
         parser.add_argument(
             "--mask-multiple-length",
-            default=1,
+            default=5,
             type=int,
             help="repeat the mask indices multiple times",
         )
@@ -109,7 +109,14 @@ class MaskedLMTask(LegacyFairseqTask):
             help="comma-separated list of dataset splits to apply shortening to, "
             'e.g., "train,valid" (default: all dataset splits)',
         )
-
+        ### SZ Ammendment Starts
+        parser.add_argument(
+            "--fix_mask_len",
+            default=True,
+            help="comma-separated list of dataset splits to apply shortening to, "
+            'e.g., "train,valid" (default: all dataset splits)',
+        )
+        ### SZ Ammendment Ends
     def __init__(self, args, dictionary):
         super().__init__(args)
         self.dictionary = dictionary
@@ -191,6 +198,7 @@ class MaskedLMTask(LegacyFairseqTask):
             mask_whole_words=mask_whole_words,
             mask_multiple_length=self.args.mask_multiple_length,
             mask_stdev=self.args.mask_stdev,
+            fix_mask_len = self.args.fix_mask_len
         )
 
         with data_utils.numpy_seed(self.args.seed):

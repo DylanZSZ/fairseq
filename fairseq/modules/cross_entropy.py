@@ -44,6 +44,8 @@ try:
             )
             if reduction == "sum":
                 return losses.sum()
+            elif reduction == "max":
+                return losses.max()
             elif reduction == "mean":
                 if ignore_index >= 0:
                     return losses.sum() / target.ne(ignore_index).sum()

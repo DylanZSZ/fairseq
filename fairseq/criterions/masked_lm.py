@@ -56,7 +56,8 @@ class MaskedLmLoss(FairseqCriterion):
         loss = modules.cross_entropy(
             logits.view(-1, logits.size(-1)),
             targets.view(-1),
-            reduction="sum",
+            #reduction="sum",
+            reduction = "max",
             ignore_index=self.padding_idx,
         )
 

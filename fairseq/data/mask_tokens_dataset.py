@@ -69,6 +69,7 @@ class MaskTokensDataset(BaseWrapperDataset):
         mask_whole_words: torch.Tensor = None,
         mask_multiple_length: int = 1,
         mask_stdev: float = 0.0,
+        fix_mask_len:bool = True
     ):
         assert 0.0 < mask_prob < 1.0
         assert 0.0 <= random_token_prob <= 1.0
@@ -89,6 +90,7 @@ class MaskTokensDataset(BaseWrapperDataset):
         self.mask_whole_words = mask_whole_words
         self.mask_multiple_length = mask_multiple_length
         self.mask_stdev = mask_stdev
+        self.fix_mask_len = fix_mask_len
 
         if random_token_prob > 0.0:
             if freq_weighted_replacement:
@@ -141,24 +143,29 @@ class MaskTokensDataset(BaseWrapperDataset):
 
             # multiple masking as described in the vq-wav2vec paper (https://arxiv.org/abs/1910.05453)
             mask_idc = np.random.choice(sz, num_mask, replace=False)
-            if self.mask_stdev > 0.0:
-                lengths = np.random.normal(
-                    self.mask_multiple_length, self.mask_stdev, size=num_mask
-                )
-                lengths = [max(0, int(round(x))) for x in lengths]
-                mask_idc = np.asarray(
-                    [
-                        mask_idc[j] + offset
-                        for j in range(len(mask_idc))
-                        for offset in range(lengths[j])
-                    ],
-                    dtype=np.int64,
-                )
-            else:
+            if self.fix_mask_len:
                 mask_idc = np.concatenate(
                     [mask_idc + i for i in range(self.mask_multiple_length)]
                 )
-            mask_idc = mask_idc[mask_idc < len(mask)]
+            else:
+                if self.mask_stdev > 0.0:
+                    lengths = np.random.normal(
+                        self.mask_multiple_length, self.mask_stdev, size=num_mask
+                    )
+                    lengths = [max(0, int(round(x))) for x in lengths]
+                    mask_idc = np.asarray(
+                        [
+                            mask_idc[j] + offset
+                            for j in range(len(mask_idc))
+                            for offset in range(lengths[j])
+                        ],
+                        dtype=np.int64,
+                    )
+                else:
+                    mask_idc = np.concatenate(
+                        [mask_idc + i for i in range(self.mask_multiple_length)]
+                    )
+                mask_idc = mask_idc[mask_idc < len(mask)]
             try:
                 mask[mask_idc] = True
             except:  # something wrong
